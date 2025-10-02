@@ -1,0 +1,8 @@
+DrissionPage
+python-dateutil
+requests
+pyotp
+cryptography
+screeninfo
+pandas
+argon2-cffi
