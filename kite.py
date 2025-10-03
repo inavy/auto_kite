@@ -13,11 +13,12 @@ from datetime import timedelta
 
 from DrissionPage._elements.none_element import NoneElement
 
+from fun_glm import gene_by_llm
+
 from fun_utils import ding_msg
 from fun_utils import load_file
 from fun_utils import save2file
 from fun_utils import format_ts
-from fun_utils import get_index_from_header
 
 from fun_okx import OkxUtils
 from fun_dp import DpUtils
@@ -29,16 +30,14 @@ from conf import DEF_NUM_TRY
 from conf import DEF_DING_TOKEN
 from conf import DEF_PATH_DATA_STATUS
 
-from conf import DEF_HEADER_ACCOUNT
-
-# from conf import TZ_OFFSET
+from conf import TZ_OFFSET
 from conf import DEL_PROFILE_DIR
 
 from conf import FILENAME_LOG
 from conf import logger
 
 # gm Check-in use UTC Time
-TZ_OFFSET = 0
+# TZ_OFFSET = 0
 
 DEF_SUCCESS = 'Success'
 DEF_FAIL = 'Fail'
@@ -69,13 +68,11 @@ class ClsKiteAi():
         self.inst_dp.plugin_okx = True
 
         # output
-        self.DEF_HEADER_STATUS = 'account,xp,status,task_num_total,task_num_done,complete_date,update_time' # noqa
+        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,update_time' # noqa
         self.IDX_XP = 1
-        self.IDX_STATUS = 2
-        self.IDX_TASK_NUM_TOTAL = 3
-        self.IDX_TASK_NUM_DONE = 4
-        self.IDX_TASK_DONE_DATE = 5
-        self.IDX_UPDATE = 6
+        self.IDX_BALANCE = 2
+        self.IDX_QUIZ_DATE = 3
+        self.IDX_UPDATE = 4
         self.FIELD_NUM = self.IDX_UPDATE + 1
 
     def set_args(self, args):
@@ -90,7 +87,7 @@ class ClsKiteAi():
         if not self.args.url:
             logger.info('Invalid self.args.url')
             sys.exit(-1)
-        filename = self.args.url.split('/')[-1]
+        filename = 'kite_ai'
         self.file_status = f'{DEF_PATH_DATA_STATUS}/kite_ai/{filename}.csv'
 
     def status_load(self):
@@ -205,7 +202,7 @@ class ClsKiteAi():
                 ele_btn.click(by_js=True)
                 tab.wait(5)
 
-                ele_btn = tab.ele('@@tag()=div@@class=sc-itBLYH deySMR@@text():OKX Wallet', timeout=2)
+                ele_btn = tab.ele('@@tag()=div@@class=sc-itBLYH deySMR@@text():OKX Wallet', timeout=2) # noqa
                 if not isinstance(ele_btn, NoneElement):
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
@@ -227,22 +224,25 @@ class ClsKiteAi():
             self.logit('click_verification', f'trying ... {i}/{DEF_NUM_TRY}')
             tab.wait(2)
 
-            iframe = tab.get_frame('t:iframe')
+            try:
+                iframe = tab.get_frame('t:iframe')
 
-            ele_btn = iframe.ele('@@tag()=span@@class:recaptcha-checkbox goog-inline-block', timeout=2)
-            if not isinstance(ele_btn, NoneElement):
-                s_checked = ele_btn.attr('aria-checked')
-                if s_checked == 'false':
-                    ele_btn = iframe('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2)
-                    ele_btn.click()
-                else:
-                    return True
+                ele_btn = iframe.ele('@@tag()=span@@class:recaptcha-checkbox goog-inline-block', timeout=2) # noqa
+                if not isinstance(ele_btn, NoneElement):
+                    s_checked = ele_btn.attr('aria-checked')
+                    if s_checked == 'false':
+                        ele_btn = iframe('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2) # noqa
+                        ele_btn.click()
+                    else:
+                        return True
+            except: # noqa
+                pass
 
         return False
 
     def click_continue(self):
         tab = self.browser.latest_tab
-        ele_blk = tab.ele('@@tag()=div@@class:flex flex-col md:flex-row justify-center', timeout=2)
+        ele_blk = tab.ele('@@tag()=div@@class:flex flex-col md:flex-row justify-center', timeout=2) # noqa
         if not isinstance(ele_blk, NoneElement):
             ele_btn = ele_blk.ele('@@tag()=button@@text()=Continue', timeout=2) # noqa
             if not isinstance(ele_btn, NoneElement):
@@ -250,78 +250,191 @@ class ClsKiteAi():
                     ele_btn.click(by_js=True)
             tab.wait(2)
 
-    def task_quiz(self, lst_answer=None):
+    def task_quiz(self, n_step, lst_answer=None):
         tab = self.browser.latest_tab
-        ele_blk = tab.ele('@@class:bg-transparent transition-all', timeout=2)
-        if not isinstance(ele_blk, NoneElement):
-
-            self.click_continue()
-
-            # 4 Questions
-            if lst_answer is None:
-                lst_answer = ['D', 'B', 'C', 'D']
-            # 将 A B C D 转换为 a1 a2 a3 a4
+        lst_path = [
+            '.flex-1 flex flex-col gap-4 min-w-[300px] md:min-w-[500px]',
+            '@@tag()=div@@class:absolute w-full z-20 flex flex-col gap-4'
+        ]
+        ele_blk = self.inst_dp.get_ele_btn(tab, lst_path)
+        if ele_blk is not NoneElement:
             lst_answer_ids = []
-            for ans in lst_answer:
-                # 将 A->a1, B->a2, C->a3, D->a4
-                idx = ord(ans) - ord('A') + 1
-                lst_answer_ids.append(f'a{idx}')
+            for i in range(len(lst_answer)):
+                s_answer = lst_answer[i]
+                ascii_value = ord(s_answer)
+                idx = ascii_value - ord('A')
+                lst_answer_ids.append(f'radio-{n_step-1}-{s_answer}-{idx}')
 
             for i in range(len(lst_answer)):
-                ele_info = ele_blk.ele('.body text-sm text-content-secondary', timeout=2)
+                ele_info = ele_blk.ele(f'@@tag()=label@@for={lst_answer_ids[i]}', timeout=2) # noqa
                 if not isinstance(ele_info, NoneElement):
                     s_info = ele_info.text
                     self.logit(None, f'Question info: {s_info}')
-                    # Question 1 of 4
-                    # 提取 1 of 4 中的 1 ，去掉 Question ，转为数字
-                    idx = int(s_info.split('of')[0].strip().replace('Question', ''))
-                    idx -= 1
-                    self.logit(None, f'Question index: {idx}')
-                    if idx != i:
-                        self.logit(None, f'Question index is not match, skip [i={i}]')
-                        continue
+                    ele_info.click()
 
-                # ele_btn = ele_blk.ele(f'@@tag()=button@@id={lst_answer_ids[i]}', timeout=2) # noqa
-                ele_btn = ele_blk.ele(f'@@tag()=button@@text():{lst_answer[i]})', timeout=2) # noqa
+                ele_btn = ele_blk.ele('@@tag()=button@@type=submit', timeout=2) # noqa
                 if not isinstance(ele_btn, NoneElement):
                     if ele_btn.wait.clickable(timeout=2):
                         ele_btn.click(by_js=True)
-                    tab.wait(2)
-                    self.click_continue()
                     tab.wait(2)
 
             return True
         return False
 
+    def get_answer_by_llm(self, s_question, lst_answer_options):
+        lst_options = []
+        lst_abc = ['A', 'B', 'C', 'D']
+        for i in range(len(lst_abc)):
+            s_option = lst_abc[i]
+            s_answer_option = f'{s_option}: {lst_answer_options[i]}'
+            lst_options.append(s_answer_option)
+        s_options = '\n'.join(lst_options)
+
+        s_prompt = (
+            "# 【功能】\n"
+            "选择题，根据题目和选项，选择正确的答案\n"
+            "# 【要求】\n"
+            "答案只能是 A、B、C、D 中的一个\n"
+            "# 【题目如下】\n"
+            f"{s_question}\n"
+            "# 【选项如下】\n"
+            f"{s_options}"
+        )
+        try:
+            s_reply = gene_by_llm(s_prompt)
+            s_reply = s_reply.strip()
+            if not s_reply:
+                self.logit(None, 's_reply from llm is empty, skip ...')
+                return False
+        except Exception as e:
+            self.logit(None, f'Error calling gene_by_llm: {e}')
+            return False
+
+        # <|begin_of_box|>
+        # <|end_of_box|>
+        s_reply = s_reply.replace('<|begin_of_box|>', '').replace('<|end_of_box|>', '')
+        self.logit('get_answer_by_llm', f's_reply from llm: {s_reply}')
+
+        return s_reply
+
+    def do_daily_quiz(self):
+        tab = self.browser.latest_tab
+        lst_path = [
+            '.flex-1 flex flex-col gap-4 min-w-[300px] md:min-w-[500px]',
+            '@@tag()=div@@class:absolute w-full z-20 flex flex-col gap-4'
+        ]
+        ele_blk = self.inst_dp.get_ele_btn(tab, lst_path)
+        if ele_blk is not NoneElement:
+            # 获取题目和选项，调用大模型获取答案
+
+            ele_info = ele_blk.ele('@@tag()=h2', timeout=2) # noqa
+            if not isinstance(ele_info, NoneElement):
+                s_question = ele_info.text
+                self.logit(None, f'Question info: {s_question}')
+            else:
+                self.logit(None, 'Question info is not found')
+                return False
+            lst_answer_options = []
+            ele_labels = ele_blk.eles('@@tag()=label', timeout=2) # noqa
+            for ele_label in ele_labels:
+                s_info = ele_label.text
+                self.logit(None, f'answer option info: {s_info}')
+                lst_answer_options.append(s_info)
+
+            # s_answer = 'B'
+            lst_options = ['A', 'B', 'C', 'D']
+            for i in range(10):
+                s_answer = self.get_answer_by_llm(s_question, lst_answer_options) # noqa
+                # 如果 s_answer 不是 A、B、C、D 中的一个，则继续获取
+                if s_answer in lst_options:
+                    break
+                time.sleep(1)
+            if s_answer not in lst_options:
+                self.logit(None, 's_answer is not A、B、C、D, skip ...')
+                return False
+
+            # 获取 s_answer 的 ASCII 值
+            ascii_value = ord(s_answer)
+            self.logit(None, f's_answer: {s_answer}, ASCII value: {ascii_value}') # noqa
+            idx = ascii_value - ord('A')
+
+            # A -> radio-A-0
+            # B -> radio-B-1
+            s_label_answer = f'radio-{s_answer}-{idx}'
+
+            ele_info = ele_blk.ele(f'@@tag()=label@@for={s_label_answer}', timeout=2) # noqa
+            if not isinstance(ele_info, NoneElement):
+                s_info = ele_info.text
+                self.logit(None, f'Question info: {s_info}')
+                ele_info.click()
+
+            ele_btn = ele_blk.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+            if not isinstance(ele_btn, NoneElement):
+                if ele_btn.wait.clickable(timeout=2):
+                    if ele_btn.click(by_js=True):
+                        return True
+        return False
+
+    def get_step_num(self):
+        s_num = -1
+        tab = self.browser.latest_tab
+        ele_btn = tab.ele('@@tag()=div@@class:flex gap-2 items-center', timeout=2) # noqa
+        if not isinstance(ele_btn, NoneElement):
+            s_text = ele_btn.text
+            self.logit('get_step_num', f'Step Text: {s_text}')
+            # Step1OF6, 提取 Step 和 OF 之间的数字
+            try:
+                s_num = re.search(r'Step(\d+)OF6', s_text).group(1)
+                s_num = int(s_num)
+            except: # noqa
+                pass
+        return s_num
+
     def finish_6_steps(self):
         tab = self.browser.latest_tab
-        for i in range(1, DEF_NUM_TRY+1):
-            self.logit('finish_6_steps', f'trying ... {i}/{DEF_NUM_TRY}')
-            tab.wait(2)
-            ele_btn = tab.ele('@@tag()=div@@class:flex gap-2 items-center', timeout=2)
-            if not isinstance(ele_btn, NoneElement):
-                s_text = ele_btn.text
-                self.logit('finish_6_steps', f'Step {i} Text: {s_text}')
-                # Step1OF6, 提取 Step 和 OF 之间的数字
-                s_num = re.search(r'Step(\d+)OF6', s_text).group(1)
-                self.logit('finish_6_steps', f'Step {s_num} Text: {s_text}')
-                if int(s_num) in [1, 2]:
-                    self.click_continue()
-                elif int(s_num) == 3:
-                    self.task_quiz(lst_answer=['C', 'C', 'D'])
+        max_try = 120
+        n_pre_step = -1
+        for i in range(1, max_try+1):
+            self.logit('finish_6_steps', f'trying ... {i}/{max_try}')
+
+            n_step = self.get_step_num()
+            if n_step == -1:
+                # 如果 Kite 图标加载完成，则返回 True
+                tab.wait.doc_loaded()
+                tab.wait(3)
+                ele_info = tab.ele('@@tag()=img@@alt=KAA@@class:20dvh', timeout=2) # noqa
+                if not isinstance(ele_info, NoneElement):
+                    self.logit('finish_6_steps', 'Finished loading')
+                    return True
+                continue
+            n_pre_step = n_step
+
+            self.logit('finish_6_steps', f'Step {n_step}')
+            if n_step in [1, 2]:
+                self.click_continue()
+            elif n_step == 3:
+                self.task_quiz(n_step, lst_answer=['D'])
+            elif n_step == 4:
+                self.task_quiz(n_step, lst_answer=['B'])
+            elif n_step == 5:
+                self.task_quiz(n_step, lst_answer=['C'])
+            elif n_step == 6:
+                if self.task_quiz(n_step, lst_answer=['B']):
+                    return True
+
+            n_step = self.get_step_num()
+            if n_step == n_pre_step:
+                self.logit('finish_6_steps', 'Step is not changed, wait ...')
+                tab.wait(2)
         return True
 
     def kite_ai_process(self):
-        tab = self.browser.new_tab(self.args.url)
-        tab.wait.doc_loaded()
-        # tab.wait(3)
+        tab = self.browser.latest_tab
         # tab.set.window.max()
         # Connect wallet
-        pdb.set_trace()
         if self.connect_wallet() is False:
             return False
 
-        pdb.set_trace()
         # 首次登录，6 个 Step
         self.finish_6_steps()
 
@@ -335,23 +448,119 @@ class ClsKiteAi():
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
                     else:
-                        self.logit('kite_ai_process', 'Button CLAIM TESTNET TOKENS is not clickable')
+                        self.logit('kite_ai_process', 'Button CLAIM TESTNET TOKENS is not clickable') # noqa
                         return False
 
-                ele_btn = tab.ele('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2)
+                ele_btn = tab.ele('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2) # noqa
                 if not isinstance(ele_btn, NoneElement):
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
-                if self.click_verification():
-                    ele_btn = tab.ele('@@tag()=button@@class:btn btn-block bg-gradient-to-r', timeout=2)
-                    if ele_btn.wait.clickable(timeout=5):
-                        ele_btn.click()
-                else:
-                    return False
 
-        self.update_status(self.IDX_XP, self.get_xp())
-        self.update_status(self.IDX_UPDATE, format_ts(time.time(), style=1, tz_offset=TZ_OFFSET))
+                max_wait_sec = 60
+                i = 0
+                while i < max_wait_sec:
+                    i += 1
+                    self.logit('kite_ai_process', f'Click verification ... {i}/{max_wait_sec}') # noqa
+
+                    if self.click_verification():
+                        ele_btn = tab.ele('@@tag()=button@@class:btn btn-block bg-gradient-to-r', timeout=2) # noqa
+                        if ele_btn.wait.clickable(timeout=5):
+                            if ele_btn.click():
+                                max_wait_sec = 20
+                                i = 0
+                                while i < max_wait_sec:
+                                    i += 1
+                                    self.logit('kite_ai_process', f'Waiting for CLAIM Status ... {i}/{max_wait_sec}') # noqa
+                                    time.sleep(1)
+                                    if self.get_tag_info('div', 'successfully'):
+                                        return True
+
+                                break
+
+                    else:
+                        tab.wait(1)
+        else:
+            self.logit('kite_ai_process', 'dropdown menu is not found') # noqa
+            return False
+
         return True
+
+    def get_tag_info(self, s_tag, s_text):
+        """
+        s_tag:
+            span
+            div
+        """
+        tab = self.browser.latest_tab
+        s_path = f'@@tag()={s_tag}@@text():{s_text}'
+        ele_info = tab.ele(s_path, timeout=1)
+        if not isinstance(ele_info, NoneElement):
+            self.logit(None, f'[html] {s_text}: {ele_info.html}')
+            s_info = ele_info.text.replace('\n', ' ')
+            self.logit(None, f'[info][{s_tag}] {s_text}: {s_info}')
+            return True
+        return False
+
+    def get_notification(self):
+        tab = self.browser.latest_tab
+        ele_info = tab.ele('@@tag()=section@@aria-label:Notifications', timeout=2) # noqa
+        if not isinstance(ele_info, NoneElement):
+            s_info = ele_info.text
+            self.logit('get_notification', f'Notification: {s_info}')
+            return s_info
+        return ''
+
+    def get_xp_balance(self):
+        tab = self.browser.latest_tab
+
+        ele_info = tab.ele('@@tag()=div@@class=join border rounded-box bg-accent', timeout=2) # noqa
+        if not isinstance(ele_info, NoneElement):
+            s_info = ele_info.text
+            s_xp, s_balance = s_info.split('XP\n')
+            s_xp = s_xp.strip()
+            s_balance = s_balance.strip()
+            self.logit('get_xp', f'XP: {s_info}')
+            return (s_xp, s_balance)
+        return ('', '')
+
+    def daily_quiz(self):
+        s_quiz_date = self.get_status_by_idx(self.IDX_QUIZ_DATE)
+        s_current_date = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
+        if s_quiz_date == s_current_date:
+            return True
+
+        b_to_submit = False
+        tab = self.browser.latest_tab
+        ele_btn = tab.ele('@@tag()=span@@class:text@@text():QUIZ', timeout=2) # noqa
+        if not isinstance(ele_btn, NoneElement):
+            if ele_btn.wait.clickable(timeout=5):
+                ele_btn.click()
+
+                max_wait_sec = 10
+                i = 0
+                while i < max_wait_sec:
+                    i += 1
+                    self.logit('daily_quiz', f'Waiting for button submit ... {i}/{max_wait_sec}') # noqa
+                    ele_btn = tab.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+                    if not isinstance(ele_btn, NoneElement):
+                        if ele_btn.wait.clickable(timeout=2):
+                            b_to_submit = True
+                            break
+                    time.sleep(1)
+
+                if b_to_submit is False:
+                    self.logit('daily_quiz', 'QUIZ is done before') # noqa
+                    return True
+
+                if self.do_daily_quiz():
+                    self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)) # noqa
+                    n_wait = 30
+                    for i in range(1, n_wait+1):
+                        self.logit('daily_quiz', f'Waiting for notification ... {i}/{n_wait}') # noqa
+                        is_tag = self.get_tag_info('div', 'Congratulations')
+                        if is_tag:
+                            return True
+        return False
 
     def kite_ai_run(self):
         self.browser = self.inst_dp.get_browser(self.args.s_profile)
@@ -367,12 +576,23 @@ class ClsKiteAi():
         if self.inst_okx.init_okx(is_bulk=True) is False:
             return False
 
-        for i in range(1, DEF_NUM_TRY+1):
-            self.logit('kite_ai_run', f'trying ... {i}/{DEF_NUM_TRY}')
+        tab = self.browser.new_tab(self.args.url)
+        tab.wait.doc_loaded()
+        tab.wait(5)
+
+        max_try = 5
+        for i in range(1, max_try+1):
+            self.logit('kite_ai_run', f'trying ... {i}/{max_try}')
             if self.kite_ai_process():
                 break
             else:
                 time.sleep(2)
+
+        self.daily_quiz()
+
+        self.update_status(self.IDX_XP, self.get_xp_balance()[0])
+        self.update_status(self.IDX_BALANCE, self.get_xp_balance()[1])
+        self.update_status(self.IDX_UPDATE, format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)) # noqa
 
         if self.args.manual_exit:
             s_msg = 'Manual Exit. Press any key to exit! ⚠️' # noqa
@@ -396,7 +616,7 @@ def send_msg(inst_kite_ai, lst_success):
 
             s_info += '- {},{}\n'.format(
                 s_profile,
-                lst_status[inst_kite_ai.IDX_STATUS],
+                lst_status[inst_kite_ai.IDX_UPDATE],
             )
         d_cont = {
             'title': 'kite_ai Task Finished! [kite_ai]',
@@ -443,7 +663,7 @@ def main(args):
     inst_kite_ai.inst_okx.purse_load(args.decrypt_pwd)
 
     # 检查 profile 参数冲突
-    if args.profile and (args.profile_begin is not None or args.profile_end is not None):
+    if args.profile and (args.profile_begin is not None or args.profile_end is not None): # noqa
         logger.info('参数 --profile 与 --profile_begin/--profile_end 不能同时使用！')
         sys.exit(1)
 
@@ -455,7 +675,7 @@ def main(args):
         start_num = int(re.search(r'\d+', args.profile_begin).group())
         end_num = int(re.search(r'\d+', args.profile_end).group())
         num_width = len(re.search(r'\d+', args.profile_begin).group())
-        items = [f"{prefix}{str(i).zfill(num_width)}" for i in range(start_num, end_num + 1)]
+        items = [f"{prefix}{str(i).zfill(num_width)}" for i in range(start_num, end_num + 1)] # noqa
         logger.info(f'Profile list: {items}')
     else:
         # 从配置文件里获取钱包名称列表
@@ -477,21 +697,10 @@ def main(args):
         date_now = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
 
         if lst_status:
-            if len(lst_status) < inst_kite_ai.FIELD_NUM:
-                return False
-
-            if args.only_gm:
-                if date_now != lst_status[inst_kite_ai.IDX_GM_DATE]:
+            for idx_status in [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_UPDATE]:
+                s_date = lst_status[idx_status][:10]
+                if date_now != s_date:
                     b_ret = b_ret and False
-            else:
-                idx_status = inst_kite_ai.IDX_STATUS
-                lst_status_ok = ['All tasks done']
-                if lst_status[idx_status] in lst_status_ok:
-                    b_complete = True
-                else:
-                    b_complete = False
-                b_ret = b_ret and b_complete
-
         else:
             b_ret = False
 
@@ -524,7 +733,7 @@ def main(args):
         logger.info(f'Progress: {percent}% [{n}/{total}] [{s_profile}]') # noqa
 
         if percent > args.max_percent:
-            logger.info(f'Progress is more than threshold {percent}% > {args.max_percent}% [{n}/{total}] [{s_profile}]')
+            logger.info(f'Progress is more than threshold {percent}% > {args.max_percent}% [{n}/{total}] [{s_profile}]') # noqa
             break
 
         profiles.remove(s_profile)
@@ -583,7 +792,7 @@ def main(args):
 
             # 输出下次执行时间，格式为 YYYY-MM-DD HH:MM:SS
             next_exec_time = datetime.now() + timedelta(seconds=sleep_time)
-            logger.info(f'next_exec_time: {next_exec_time.strftime("%Y-%m-%d %H:%M:%S")}')
+            logger.info(f'next_exec_time: {next_exec_time.strftime("%Y-%m-%d %H:%M:%S")}') # noqa
             time.sleep(sleep_time)
 
     send_msg(inst_kite_ai, lst_success)

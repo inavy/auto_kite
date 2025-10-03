@@ -6,3 +6,4 @@ cryptography
 screeninfo
 pandas
 argon2-cffi
+zhipuai
