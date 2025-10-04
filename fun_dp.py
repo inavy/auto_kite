@@ -193,12 +193,23 @@ class DpUtils():
                 # Close okx popup window
                 self.close_okx_popup()
 
+            self.init_window_size()
+
             return self.browser
         except Exception as e:
             logger.info(f'Error: {e}')
         finally:
             pass
         return None
+
+    def init_window_size(self):
+        tab = self.browser.latest_tab
+        if self.args.set_window_size == 'max':
+            # 判断窗口是否是最大化
+            if tab.rect.window_state != 'maximized':
+                # 设置浏览器窗口最大化
+                tab.set.window.max()
+                self.logit(None, 'Set browser window to maximize')
 
     def close_okx_popup(self):
         n_tabs_pre = self.browser.tabs_count

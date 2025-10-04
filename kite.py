@@ -472,7 +472,9 @@ class ClsKiteAi():
                                     i += 1
                                     self.logit('kite_ai_process', f'Waiting for CLAIM Status ... {i}/{max_wait_sec}') # noqa
                                     time.sleep(1)
-                                    if self.get_tag_info('div', 'successfully'):
+                                    if self.get_tag_info('div', 'successfully'): # noqa
+                                        return True
+                                    elif self.get_tag_info('div', 'Already'):
                                         return True
 
                                 break
@@ -495,7 +497,7 @@ class ClsKiteAi():
         s_path = f'@@tag()={s_tag}@@text():{s_text}'
         ele_info = tab.ele(s_path, timeout=1)
         if not isinstance(ele_info, NoneElement):
-            self.logit(None, f'[html] {s_text}: {ele_info.html}')
+            # self.logit(None, f'[html] {s_text}: {ele_info.html}')
             s_info = ele_info.text.replace('\n', ' ')
             self.logit(None, f'[info][{s_tag}] {s_text}: {s_info}')
             return True
@@ -558,6 +560,7 @@ class ClsKiteAi():
                     for i in range(1, n_wait+1):
                         self.logit('daily_quiz', f'Waiting for notification ... {i}/{n_wait}') # noqa
                         is_tag = self.get_tag_info('div', 'Congratulations')
+                        is_tag = is_tag or self.get_tag_info('div', 'answer')
                         if is_tag:
                             return True
         return False
@@ -579,6 +582,7 @@ class ClsKiteAi():
         tab = self.browser.new_tab(self.args.url)
         tab.wait.doc_loaded()
         tab.wait(5)
+        self.inst_dp.init_window_size()
 
         max_try = 5
         for i in range(1, max_try+1):
@@ -697,7 +701,9 @@ def main(args):
         date_now = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
 
         if lst_status:
-            for idx_status in [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_UPDATE]:
+            # lst_idx = [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_UPDATE]
+            lst_idx = [inst_kite_ai.IDX_UPDATE]
+            for idx_status in lst_idx:
                 s_date = lst_status[idx_status][:10]
                 if date_now != s_date:
                     b_ret = b_ret and False
@@ -889,7 +895,7 @@ if __name__ == '__main__':
         help='Only do gm checkin'
     )
     parser.add_argument(
-        '--set_window_size', required=False, default='normal',
+        '--set_window_size', required=False, default='max',
         help='[默认为 normal] 窗口大小，normal 为正常，max 为最大化'
     )
     # 清除 X Cookie

@@ -278,7 +278,7 @@ class OkxUtils():
                             self.browser.wait(1)
 
                         # 恢复原来的窗口大小
-                        tab.set.window.size(width, height)
+                        # tab.set.window.size(width, height)
 
                 # Confirm
                 max_wait_sec = 10
