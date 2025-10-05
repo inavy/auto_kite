@@ -419,15 +419,15 @@ def load_advertising_urls(csv_file):
     if not os.path.exists(csv_file):
         print(f'CSV file not found: {csv_file}')
         return []
-    
+
     # 获取今天的日期
     today = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
     yesterday = format_ts(time.time() - 24 * 60 * 60, style=1, tz_offset=TZ_OFFSET) # noqa
-    
+
     try:
         # 使用 load_file 函数加载 CSV 数据
         dic_data = load_file(csv_file, idx_key=2)
-        
+
         # 提取 URL（CSV 格式：date,project,url）
         for key, fields in dic_data.items():
             if len(fields) >= 3:
@@ -486,11 +486,11 @@ def load_ad_user(csv_file):
     if not os.path.exists(csv_file):
         print(f'CSV file not found: {csv_file}')
         return []
-    
+
     try:
         # 使用 load_file 函数加载 CSV 数据
         dic_data = load_file(csv_file, idx_key=0)
-        
+
         # 提取 URL（CSV 格式：date,project,url）
         for key, fields in dic_data.items():
             if len(fields) >= 2:

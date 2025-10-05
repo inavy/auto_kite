@@ -294,7 +294,7 @@ class ClsKiteAi():
             "# 【功能】\n"
             "选择题，根据题目和选项，选择正确的答案\n"
             "# 【要求】\n"
-            "答案只能是 A、B、C、D 中的一个\n"
+            "答案只能是 A、B、C、D 中的一个，不要输出分析过程，直接输出答案\n"
             "# 【题目如下】\n"
             f"{s_question}\n"
             "# 【选项如下】\n"
@@ -343,14 +343,15 @@ class ClsKiteAi():
 
             # s_answer = 'B'
             lst_options = ['A', 'B', 'C', 'D']
-            for i in range(10):
+            for i in range(15):
                 s_answer = self.get_answer_by_llm(s_question, lst_answer_options) # noqa
                 # 如果 s_answer 不是 A、B、C、D 中的一个，则继续获取
                 if s_answer in lst_options:
                     break
+                self.logit(None, f's_answer is not A、B、C、D, try again ... {i+1}/15') # noqa
                 time.sleep(1)
             if s_answer not in lst_options:
-                self.logit(None, 's_answer is not A、B、C、D, skip ...')
+                self.logit(None, 's_answer is not A、B、C、D [FAILED]')
                 return False
 
             # 获取 s_answer 的 ASCII 值
@@ -395,7 +396,7 @@ class ClsKiteAi():
         max_try = 90
         n_pre_step = -1
         for i in range(1, max_try+1):
-            if i % 3 == 0:
+            if i % 30 == 0:
                 tab.refresh()
                 tab.wait(3)
             self.logit('finish_6_steps', f'trying ... {i}/{max_try}')
@@ -463,7 +464,7 @@ class ClsKiteAi():
                 i = 0
                 while i < max_wait_sec:
                     i += 1
-                    self.logit('kite_ai_process', f'Click verification ... {i}/{max_wait_sec}') # noqa
+                    self.logit(None, f'Wait to click verification ... {i}/{max_wait_sec}') # noqa
 
                     if self.click_verification():
                         ele_btn = tab.ele('@@tag()=button@@class:btn btn-block bg-gradient-to-r', timeout=2) # noqa
