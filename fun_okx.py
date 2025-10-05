@@ -4,23 +4,12 @@ okx utils
 """
 import os  # noqa
 import sys  # noqa
-import argparse
-import random
-import time
-import copy
 import pdb  # noqa
-import shutil
-import math
 import re  # noqa
 import getpass
 from datetime import datetime  # noqa
 
-from DrissionPage import ChromiumOptions
-from DrissionPage import Chromium
 from DrissionPage._elements.none_element import NoneElement
-
-from fun_utils import ding_msg
-from fun_utils import load_file
 
 from decrypt_utils import decrypt_csv
 
@@ -39,7 +28,9 @@ from conf import DEF_OKX_PWD
 class OkxUtils():
 
     def __init__(self) -> None:
-        self.INFO_NOT_ENOUGH_TO_COVER_FEE = 'You don’t have enough ETH to cover the potential network fee.'
+        self.INFO_NOT_ENOUGH_TO_COVER_FEE = (
+            'You don\'t have enough ETH to cover the potential network fee.'
+        )
         self.FEE_TOO_HIGH = 'Network fee is greater than max fee'
 
         self.args = None
@@ -195,7 +186,8 @@ class OkxUtils():
             self.browser.wait(1)
             if not tab.html:
                 input(
-                    'Press Check Addon is installed, Press Enter to continue ...'
+                    'Press Check Addon is installed, '
+                    'Press Enter to continue ...'
                 )
                 continue
 
@@ -286,7 +278,8 @@ class OkxUtils():
                 while i < max_wait_sec:
                     tab = self.browser.latest_tab
                     ele_btn = tab.ele(
-                        '@@tag()=button@@data-testid=okd-button@@text():Confirm',
+                        '@@tag()=button@@data-testid=okd-button'
+                        '@@text():Confirm',
                         timeout=2)  # noqa
                     self.logit('init_okx',
                                f'To Confirm ... {i}/{max_wait_sec}')  # noqa
@@ -374,8 +367,7 @@ class OkxUtils():
 
                     self.browser.wait(1)
                     ele_btn = tab.ele(
-                        '@@tag()=button@@data-testid=okd-button@@text():Unlock',
-                        timeout=2)  # noqa
+                        '@@tag()=button@@data-testid=okd-button@@text():Unlock', timeout=2)  # noqa
                     if not isinstance(ele_btn, NoneElement):
                         ele_btn.click(by_js=True)
                         self.browser.wait(1)
@@ -398,7 +390,8 @@ class OkxUtils():
                     self.browser.wait(1)
                 else:
                     ele_btn = tab.ele(
-                        '@@tag()=button@@data-testid=okd-button@@text()=Connect',
+                        '@@tag()=button@@data-testid=okd-button'
+                        '@@text()=Connect',
                         timeout=2)  # noqa
                     if not isinstance(ele_btn, NoneElement):
                         ele_btn.click(by_js=True)
@@ -488,7 +481,8 @@ class OkxUtils():
         Return:
             (True/False, f_fee, s_info)
             s_info:
-                [self.INFO_NOT_ENOUGH_TO_COVER_FEE] You don’t have enough ETH to cover the potential network fee
+                [self.INFO_NOT_ENOUGH_TO_COVER_FEE] You don't have enough ETH
+                to cover the potential network fee
                 [self.FEE_TOO_HIGH] Network fee is greater than max fee
         """
         f_fee = -1
@@ -514,13 +508,15 @@ class OkxUtils():
                 if f_fee > max_fee:
                     self.logit(
                         None,
-                        f'Network fee is greater than max fee: {s_fee} > {s_max_fee} [ERROR]'
+                        f'Network fee is greater than max fee: '
+                        f'{s_fee} > {s_max_fee} [ERROR]'
                     )  # noqa
                     self.okx_cancel()
                     return (False, f_fee, self.FEE_TOO_HIGH)
                 self.logit(
                     None,
-                    f'Network fee is lower than max fee: {s_fee} <= {s_max_fee} [OK]'
+                    f'Network fee is lower than max fee: '
+                    f'{s_fee} <= {s_max_fee} [OK]'
                 )  # noqa
 
             ele_blk = tab.ele('@@tag()=div@@class:_tip-message',
@@ -613,7 +609,7 @@ class OkxUtils():
 
                 # address
                 ele_btn = tab.ele(
-                    f'@@tag()=div@@class=new-coin-detail-address-content',
+                    '@@tag()=div@@class=new-coin-detail-address-content',
                     timeout=2)  # noqa
                 if not isinstance(ele_btn, NoneElement):
                     s_info = ele_btn.text
@@ -660,7 +656,8 @@ class OkxUtils():
                 tab.wait(5)
 
                 ele_back_btn = tab.ele(
-                    '@@tag()=i@@class:icon iconfont okds-arrow-chevron-left-centered',
+                    '@@tag()=i@@class:icon iconfont '
+                    'okds-arrow-chevron-left-centered',
                     timeout=2)
                 if not isinstance(ele_back_btn, NoneElement):
                     ele_back_btn.click(by_js=True)
@@ -726,11 +723,12 @@ class OkxUtils():
                         s_num = re.search(r'\((.*?)\)', s_text).group(1)
                         self.logit(None, f'Hidden: {s_num} ...')  # noqa
                         if int(s_num) > 0:
-                            ele_btn = ele_blk.ele('@@tag()=i@@class:icon',
-                                                  timeout=2)  # noqa
+                            ele_btn = ele_blk.ele(
+                                '@@tag()=i@@class:icon',
+                                timeout=2)  # noqa
                             if not isinstance(ele_btn, NoneElement):
-                                # icon iconfont okds-arrow-chevron-up-md _icon_1e5k7_12
-                                # icon iconfont okds-arrow-chevron-down-md _icon_1e5k7_12
+                                # icon iconfont okds-arrow-chevron-up-md _icon_1e5k7_12 # noqa
+                                # icon iconfont okds-arrow-chevron-down-md _icon_1e5k7_12 # noqa
                                 if ele_btn.attr('class').find(
                                         'okds-arrow-chevron-down-md') != -1:
                                     ele_btn.click(by_js=True)

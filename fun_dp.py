@@ -1,36 +1,26 @@
 import os # noqa
 import sys # noqa
 import argparse
-import random
 import time
-import copy
 import pdb # noqa
-import shutil
-import math
 import re # noqa
 from datetime import datetime # noqa
-import pyotp
 
 from DrissionPage import ChromiumOptions
 from DrissionPage import Chromium
 from DrissionPage._elements.none_element import NoneElement
 
 from fun_utils import ding_msg
-from fun_utils import load_file
-from fun_utils import save2file
 from fun_utils import format_ts
-from fun_utils import time_difference
 from fun_utils import get_index_from_header
 
 from proxy_api import set_proxy
-
 
 from conf import DEF_LOCAL_PORT
 from conf import DEF_INCOGNITO
 from conf import DEF_USE_HEADLESS
 from conf import DEF_DEBUG
 from conf import DEF_PATH_USER_DATA
-from conf import DEF_NUM_TRY
 from conf import DEF_DING_TOKEN
 from conf import DEF_PATH_BROWSER
 
@@ -267,7 +257,7 @@ class DpUtils():
                                 self.logit(None, 'Save button is clicked')
                                 break
                             except Exception as e: # noqa
-                                self.logit('set_max_try_times', f'Save exception: {e}')
+                                self.logit('set_max_try_times', f'Save exception: {e}') # noqa
 
             self.logit(None, f'set_mint_num ... [{i}/{max_try}]')
 
@@ -637,11 +627,11 @@ class DpUtils():
             tab.wait(2)
             ele_extension = tab.ele('tag=extensions-manager', timeout=2)
             if not isinstance(ele_extension, NoneElement):
-                ele_view = ele_extension.sr.ele('tag=cr-view-manager', timeout=2)
+                ele_view = ele_extension.sr.ele('tag=cr-view-manager', timeout=2) # noqa
                 if not isinstance(ele_view, NoneElement):
-                    ele_detail = ele_view.ele('tag=extensions-detail-view', timeout=2)
+                    ele_detail = ele_view.ele('tag=extensions-detail-view', timeout=2) # noqa
                     if not isinstance(ele_detail, NoneElement):
-                        ele_section = ele_detail.sr.ele('@@id=id-section', timeout=2)
+                        ele_section = ele_detail.sr.ele('@@id=id-section', timeout=2) # noqa
                         if not isinstance(ele_section, NoneElement):
                             s_text = ele_section.text
                             if extension_id in s_text:
@@ -669,8 +659,8 @@ class DpUtils():
 
         if lst_extension_id is None:
             try:
-                id = self.args.extension_id
-            except:
+                id = self.args.extension_id # noqa
+            except: # noqa
                 self.args.extension_id = ''
 
             if self.args.extension_id == '':
@@ -681,7 +671,7 @@ class DpUtils():
                 ]
             else:
                 # id 用逗号分隔
-                lst_extension_id = [(s_id, 'custom') for s_id in self.args.extension_id.split(',')]
+                lst_extension_id = [(s_id, 'custom') for s_id in self.args.extension_id.split(',')] # noqa
                 # lst_extension_id = [(self.args.extension_id, 'custom')]
 
         for i in range(n_max_try):
@@ -689,7 +679,7 @@ class DpUtils():
             self.logit(None, f'Check Extension, try: {i+1}/{n_max_try} ...')
 
             for extension_id, s_name in lst_extension_id:
-                is_installed = self.is_extension_installed(extension_id, s_name)
+                is_installed = self.is_extension_installed(extension_id, s_name) # noqa
                 if is_installed:
                     self.logit(None, f'插件 {s_name} 已安装 [OK]')
                 else:
@@ -701,16 +691,16 @@ class DpUtils():
                 break
 
         return b_ret
-    
+
     def check_connection(self):
         """
         检测当前的互联网连接是否可用
-        
+
         Returns:
             bool: True表示连接正常，False表示连接异常
         """
         import time
-        
+
         for attempt in range(3):  # 最多重试3次（初始1次 + 重试2次）
             try:
                 # 尝试HTTP请求到Google
@@ -720,14 +710,14 @@ class DpUtils():
                     logger.info(f"网络连接检测成功 (Google) - 第{attempt + 1}次尝试")
                     return True
                 else:
-                    logger.warning(f"网络连接检测失败，HTTP状态码: {response.status_code} - 第{attempt + 1}次尝试")
+                    logger.warning(f"网络连接检测失败，HTTP状态码: {response.status_code} - 第{attempt + 1}次尝试") # noqa
                     if attempt < 2:  # 如果不是最后一次尝试
                         logger.info("等待3秒后重试...")
                         time.sleep(3)
                         continue
                     else:
                         return False
-                
+
             except Exception as e:
                 logger.error(f"网络连接检测异常: {e} - 第{attempt + 1}次尝试")
                 if attempt < 2:  # 如果不是最后一次尝试
@@ -736,20 +726,20 @@ class DpUtils():
                     continue
                 else:
                     return False
-        
+
         return False
 
 
 def main():
     parser = argparse.ArgumentParser(description='DrissionPage 插件检测工具')
     parser.add_argument('--profile', type=str, required=True, help='浏览器用户目录名称')
-    parser.add_argument('--extension_id', type=str, required=False, default='', help='需要检测的插件 extension_id')
-    parser.add_argument('--check_connection', action='store_true', help='检测网络连接状态')
+    parser.add_argument('--extension_id', type=str, required=False, default='', help='需要检测的插件 extension_id') # noqa
+    parser.add_argument('--check_connection', action='store_true', help='检测网络连接状态') # noqa
     args = parser.parse_args()
 
     dp = DpUtils()
     dp.set_args(args)
-    
+
     # 如果指定了检测网络连接
     if args.check_connection:
         print("正在检测网络连接...")
@@ -758,7 +748,7 @@ def main():
         else:
             print("❌ 网络连接异常")
         return
-    
+
     # 检测浏览器和插件
     browser = dp.get_browser(args.profile)
     if browser is None:

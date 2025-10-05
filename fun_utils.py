@@ -422,7 +422,7 @@ def load_advertising_urls(csv_file):
     
     # 获取今天的日期
     today = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
-    yesterday = format_ts(time.time() - 24 * 60 * 60, style=1, tz_offset=TZ_OFFSET)
+    yesterday = format_ts(time.time() - 24 * 60 * 60, style=1, tz_offset=TZ_OFFSET) # noqa
     
     try:
         # 使用 load_file 函数加载 CSV 数据
@@ -450,15 +450,15 @@ def load_advertising_urls(csv_file):
             lst_ret = lst_urls_today
         elif lst_urls_yesterday:
             print(f'No URLs for today, loaded {len(lst_urls_yesterday)} '
-                                'URLs for yesterday')
+                                'URLs for yesterday') # noqa
             lst_ret = lst_urls_yesterday
         elif lst_urls_all:
-            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} '
-                                'total URLs from CSV')
+            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} ' # noqa
+                                'total URLs from CSV') # noqa
             lst_ret = lst_urls_yesterday
         else:
-            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} '
-                                'total URLs from CSV')
+            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} ' # noqa
+                                'total URLs from CSV') # noqa
             lst_ret = lst_urls_all
 
     except Exception as e:

@@ -459,7 +459,7 @@ class ClsKiteAi():
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
 
-                max_wait_sec = 60
+                max_wait_sec = 20
                 i = 0
                 while i < max_wait_sec:
                     i += 1
