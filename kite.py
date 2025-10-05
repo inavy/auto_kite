@@ -312,7 +312,7 @@ class ClsKiteAi():
 
         # <|begin_of_box|>
         # <|end_of_box|>
-        s_reply = s_reply.replace('<|begin_of_box|>', '').replace('<|end_of_box|>', '')
+        s_reply = s_reply.replace('<|begin_of_box|>', '').replace('<|end_of_box|>', '') # noqa
         self.logit('get_answer_by_llm', f's_reply from llm: {s_reply}')
 
         return s_reply
@@ -392,9 +392,12 @@ class ClsKiteAi():
 
     def finish_6_steps(self):
         tab = self.browser.latest_tab
-        max_try = 120
+        max_try = 90
         n_pre_step = -1
         for i in range(1, max_try+1):
+            if i % 3 == 0:
+                tab.refresh()
+                tab.wait(3)
             self.logit('finish_6_steps', f'trying ... {i}/{max_try}')
 
             n_step = self.get_step_num()
@@ -526,7 +529,7 @@ class ClsKiteAi():
         return ('', '')
 
     def daily_quiz(self):
-        s_quiz_date = self.get_status_by_idx(self.IDX_QUIZ_DATE)
+        s_quiz_date = self.get_status_by_idx(self.IDX_QUIZ_DATE)[:10]
         s_current_date = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
         if s_quiz_date == s_current_date:
             return True
@@ -555,7 +558,7 @@ class ClsKiteAi():
                     return True
 
                 if self.do_daily_quiz():
-                    self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)) # noqa
+                    self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
                     n_wait = 30
                     for i in range(1, n_wait+1):
                         self.logit('daily_quiz', f'Waiting for notification ... {i}/{n_wait}') # noqa
@@ -596,7 +599,7 @@ class ClsKiteAi():
 
         self.update_status(self.IDX_XP, self.get_xp_balance()[0])
         self.update_status(self.IDX_BALANCE, self.get_xp_balance()[1])
-        self.update_status(self.IDX_UPDATE, format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)) # noqa
+        # self.update_status(self.IDX_UPDATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
 
         if self.args.manual_exit:
             s_msg = 'Manual Exit. Press any key to exit! ⚠️' # noqa
@@ -701,8 +704,8 @@ def main(args):
         date_now = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
 
         if lst_status:
-            # lst_idx = [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_UPDATE]
-            lst_idx = [inst_kite_ai.IDX_UPDATE]
+            lst_idx = [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_UPDATE]
+            # lst_idx = [inst_kite_ai.IDX_UPDATE]
             for idx_status in lst_idx:
                 s_date = lst_status[idx_status][:10]
                 if date_now != s_date:
