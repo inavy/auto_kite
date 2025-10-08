@@ -778,10 +778,13 @@ def main(args):
         date_now = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
 
         if lst_status:
-            lst_idx = [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_UPDATE]
-            # lst_idx = [inst_kite_ai.IDX_UPDATE]
+            lst_idx = [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_CLAIM_KITE]
+            # lst_idx = [inst_kite_ai.IDX_CLAIM_KITE]
             for idx_status in lst_idx:
-                s_date = lst_status[idx_status][:10]
+                try:
+                    s_date = lst_status[idx_status][:10]
+                except: # noqa
+                    s_date = ''
                 if date_now != s_date:
                     b_ret = b_ret and False
         else:
