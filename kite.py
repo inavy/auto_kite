@@ -68,13 +68,14 @@ class ClsKiteAi():
         self.inst_dp.plugin_okx = True
 
         # output
-        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,claim_kite,badge,update_time' # noqa
+        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,claim_kite,chat_ai,badge,update_time' # noqa
         self.IDX_XP = 1
         self.IDX_BALANCE = 2
         self.IDX_QUIZ_DATE = 3
         self.IDX_CLAIM_KITE = 4
-        self.IDX_BADGE = 5
-        self.IDX_UPDATE = 6
+        self.IDX_CHAT_AI = 5
+        self.IDX_BADGE = 6
+        self.IDX_UPDATE = 7
         self.FIELD_NUM = self.IDX_UPDATE + 1
 
     def set_args(self, args):
@@ -492,12 +493,97 @@ class ClsKiteAi():
             self.update_status(self.IDX_BADGE, s_val_badge)
         return True
 
+    def click_aifaq(self):
+        """
+        Return:
+            (status_code, s_info)
+            status_code:
+                0: success
+                1: daily limitation
+                2: error
+        """
+        tab = self.browser.latest_tab
+        ele_btns = tab.eles('@@tag()=button@@class:text-left p-1 bg-muted', timeout=2) # noqa
+        if len(ele_btns) > 0:
+            for ele_btn in ele_btns:
+                if ele_btn.wait.clickable(timeout=5):
+                    ele_btn.click()
+                    tab.wait(10)
+                    ele_infos = tab.eles('@@tag()=p@@class=mb-2 last:mb-0', timeout=2) # noqa
+                    if len(ele_infos) > 0:
+                        ele_info = ele_infos[-1]
+                        s_info = ele_info.text
+                        self.logit('click_aifaq', f'Answer: {s_info}')
+                        # You've reached daily limitation. Please try 24 hours again.
+                        if 'daily limitation' in s_info:
+                            self.update_status(self.IDX_CHAT_AI, s_info) # noqa
+                            return (1, s_info)
+                        self.update_status(self.IDX_CHAT_AI, 'Yes') # noqa
+
+        return (0, '')
+
+    def input_to_ai(self):
+        tab = self.browser.latest_tab
+        ele_input = tab.ele('@@tag()=input@@placeholder:Type', timeout=2) # noqa
+        if not isinstance(ele_input, NoneElement):
+            if ele_input.wait.clickable(timeout=5):
+                ele_input.click()
+                tab.wait(2)
+                tab.actions.move_to(ele_input).click().type('Hello')
+                tab.wait(2)
+                ele_submit = tab.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+                if not isinstance(ele_submit, NoneElement):
+                    if ele_submit.wait.clickable(timeout=5):
+                        ele_submit.click()
+                        tab.wait(10)
+
+    def click_menu_kite_ai(self):
+        tab = self.browser.latest_tab
+        ele_btn = tab.ele('@@tag()=img@@src:subnet_WXSBE1yFo8oCb9r9mcrbLqfS', timeout=2) # noqa
+        if not isinstance(ele_btn, NoneElement):
+            if ele_btn.wait.clickable(timeout=5):
+                ele_btn.click()
+                tab.wait(2)
+                return True
+        return False
+
+    def chat_with_ai(self):
+        tab = self.browser.latest_tab
+
+        n_max_try = 20
+        for i in range(n_max_try):
+            self.logit('chat_with_ai', f'Trying ... {i+1}/{n_max_try}')
+            if not self.click_menu_kite_ai():
+                continue
+
+            ele_menu_btn = tab.ele('.relative cursor-pointer text-center -mt-1', timeout=2) # noqa
+            if not isinstance(ele_menu_btn, NoneElement):
+                if ele_menu_btn.wait.clickable(timeout=5):
+                    ele_menu_btn.click()
+                    tab.wait(2)
+
+            ele_btns = tab.eles('@@tag()=div@@id:agent_', timeout=2) # noqa
+            if len(ele_btns) > 0:
+                ele_btn = random.choice(ele_btns)
+                s_agent = ele_btn.text.replace('\n', ': ')
+                self.logit('chat_with_ai', f'Agent: {s_agent}')
+                if ele_btn.wait.clickable(timeout=5):
+                    ele_btn.click()
+                    tab.wait(2)
+                    (status_code, s_info) = self.click_aifaq()
+                    if status_code == 1:
+                        self.logit('chat_with_ai', f'Daily limitation: {s_info}')
+                        return (status_code, s_info)
+
+        return (0, '')
+
     def kite_ai_process(self):
         tab = self.browser.latest_tab
         # tab.set.window.max()
         # Connect wallet
         if self.connect_wallet() is False:
             return False
+        # pdb.set_trace()
 
         # 首次登录，6 个 Step
         self.finish_6_steps()
@@ -663,6 +749,7 @@ class ClsKiteAi():
                 time.sleep(2)
 
         self.daily_quiz()
+        self.chat_with_ai()
 
         # generate a random number
         random_num = random.randint(1, 9)
