@@ -566,6 +566,22 @@ class DpUtils():
             return True
         return False
 
+    def get_tag_info_v2(self, s_tag, s_text):
+        """
+        s_tag:
+            span
+            div
+        """
+        tab = self.browser.latest_tab
+        s_path = f'@@tag()={s_tag}@@text():{s_text}'
+        ele_info = tab.ele(s_path, timeout=1)
+        if not isinstance(ele_info, NoneElement):
+            # self.logit(None, f'[html] {s_text}: {ele_info.html}')
+            s_info = ele_info.text.replace('\n', ' ')
+            self.logit(None, f'[info][{s_tag}] {s_text}: {s_info}')
+            return (True, s_info)
+        return (False, '')
+
     def set_vpn(self, s_vpn=None):
         if s_vpn is None:
             idx_vpn = get_index_from_header(DEF_HEADER_ACCOUNT, 'proxy')

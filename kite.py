@@ -68,11 +68,13 @@ class ClsKiteAi():
         self.inst_dp.plugin_okx = True
 
         # output
-        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,update_time' # noqa
+        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,claim_kite,badge,update_time' # noqa
         self.IDX_XP = 1
         self.IDX_BALANCE = 2
         self.IDX_QUIZ_DATE = 3
-        self.IDX_UPDATE = 4
+        self.IDX_CLAIM_KITE = 4
+        self.IDX_BADGE = 5
+        self.IDX_UPDATE = 6
         self.FIELD_NUM = self.IDX_UPDATE + 1
 
     def set_args(self, args):
@@ -432,6 +434,64 @@ class ClsKiteAi():
                 tab.wait(2)
         return True
 
+    def claim_badge(self):
+        tab = self.browser.latest_tab
+        ele_btn = tab.ele('@@tag()=span@@class:text@@text():BADGES', timeout=2) # noqa
+        if not isinstance(ele_btn, NoneElement):
+            if ele_btn.wait.clickable(timeout=5):
+                ele_btn.click()
+                tab.wait(3)
+
+        is_claimed = False
+        s_val_badge = ''
+        ele_btns = tab.eles('@@tag()=div@@class=flex justify-center mb-4', timeout=2) # noqa
+        if len(ele_btns) > 0:
+            for ele_btn in ele_btns:
+                if ele_btn.wait.clickable(timeout=5):
+                    ele_h3 = ele_btn.next()
+                    ele_p = ele_h3.next()
+                    s_h3 = ele_h3.text
+                    s_p = ele_p.text
+                    self.logit('badges', f'{s_h3}: {s_p}')
+                    if 'Sorry' in s_p:
+                        continue
+                    # You’re eligible for this badge.
+                    if ele_btn.wait.clickable(timeout=5):
+                        ele_btn.click()
+                        tab.wait(2)
+                        ele_btn.click()
+                        tab.wait(2)
+                        ele_claim_btn = tab.ele('@@tag()=button@@class:btn bg-gradient-to-r@@text()=CLAIM BADGE', timeout=2) # noqa
+                        if not isinstance(ele_claim_btn, NoneElement):
+                            if ele_claim_btn.wait.clickable(timeout=5):
+                                ele_claim_btn.click()
+                                n_wait = 15
+                                i = 0
+                                while i < n_wait:
+                                    i += 1
+                                    self.logit('badges', f'Waiting for CLAIM BADGE ... {i}/{n_wait}') # noqa
+                                    time.sleep(1)
+                                    is_tag, s_text = self.inst_dp.get_tag_info_v2('p', 'YOU CLAIMED THIS ON') # noqa
+                                    if is_tag:
+                                        is_claimed = True
+                                        break
+                                tab.wait(2)
+
+                is_tag, s_text = self.inst_dp.get_tag_info_v2('p', 'YOU CLAIMED THIS ON') # noqa
+                if is_tag:
+                    s_val_badge += f'{s_h3}[{s_text}];'
+
+                ele_back_btn = tab.ele('@@tag()=button@@class=btn btn-outline@@text()=BACK', timeout=2) # noqa
+                if not isinstance(ele_back_btn, NoneElement):
+                    if ele_back_btn.wait.clickable(timeout=5):
+                        ele_back_btn.click()
+
+        s_val_badge = s_val_badge.strip(';')
+        s_val_badge_pre = self.get_status_by_idx(self.IDX_BADGE)
+        if is_claimed or s_val_badge_pre == '':
+            self.update_status(self.IDX_BADGE, s_val_badge)
+        return True
+
     def kite_ai_process(self):
         tab = self.browser.latest_tab
         # tab.set.window.max()
@@ -477,6 +537,7 @@ class ClsKiteAi():
                                     self.logit('kite_ai_process', f'Waiting for CLAIM Status ... {i}/{max_wait_sec}') # noqa
                                     time.sleep(1)
                                     if self.get_tag_info('div', 'successfully'): # noqa
+                                        self.update_status(self.IDX_CLAIM_KITE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
                                         return True
                                     elif self.get_tag_info('div', 'Already'):
                                         return True
@@ -554,18 +615,23 @@ class ClsKiteAi():
                             break
                     time.sleep(1)
 
+                ele_selected = tab.ele('@@tag()=input@@checked@@name=radio', timeout=2) # noqa
+                if not isinstance(ele_selected, NoneElement):
+                    b_to_submit = False
+
                 if b_to_submit is False:
                     self.logit('daily_quiz', 'QUIZ is done before') # noqa
                     return True
 
                 if self.do_daily_quiz():
-                    self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
                     n_wait = 30
                     for i in range(1, n_wait+1):
                         self.logit('daily_quiz', f'Waiting for notification ... {i}/{n_wait}') # noqa
-                        is_tag = self.get_tag_info('div', 'Congratulations')
-                        is_tag = is_tag or self.get_tag_info('div', 'answer')
+                        is_tag = self.inst_dp.get_tag_info('div', 'Congratulations') # noqa
+                        is_tag = is_tag or self.inst_dp.get_tag_info('div', 'answer') # noqa
                         if is_tag:
+                            self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
+                            time.sleep(2)
                             return True
         return False
 
@@ -598,9 +664,16 @@ class ClsKiteAi():
 
         self.daily_quiz()
 
+        # generate a random number
+        random_num = random.randint(1, 9)
+        if random_num % 2 == 0:
+            self.logit('kite_ai_run', f'random_num is {random_num}, Claim badge') # noqa
+            self.claim_badge()
+        else:
+            self.logit('kite_ai_run', f'random_num is {random_num}, Not claim badge') # noqa
+
         self.update_status(self.IDX_XP, self.get_xp_balance()[0])
         self.update_status(self.IDX_BALANCE, self.get_xp_balance()[1])
-        # self.update_status(self.IDX_UPDATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
 
         if self.args.manual_exit:
             s_msg = 'Manual Exit. Press any key to exit! ⚠️' # noqa
