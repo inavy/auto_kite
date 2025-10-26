@@ -749,10 +749,14 @@ class ClsKiteAi():
             return (True, 0)
         s_timestamp = lst_status[idx_status]
         if s_timestamp:
-            n_seconds = ts_diff(s_timestamp)
-            n_remain_sec = 86460 - n_seconds
-            if n_remain_sec > 0:
-                return (False, n_remain_sec)
+            try:
+                n_seconds = ts_diff(s_timestamp)
+                n_remain_sec = 86460 - n_seconds
+                if n_remain_sec > 0:
+                    return (False, n_remain_sec)
+            except Exception as e:  # noqa
+                # self.logit('kite_ai_run', f'[ERROR] {e}')
+                return (True, 0)
         return (True, 0)
 
     def kite_ai_run(self):
