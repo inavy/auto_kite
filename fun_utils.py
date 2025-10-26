@@ -318,6 +318,24 @@ def time_difference(input_time_str):
     return time_diff_seconds
 
 
+def ts_diff(input_time_str):
+    # 将传入的时间字符串转换为datetime对象
+    input_time = datetime.strptime(input_time_str, "%Y-%m-%dT%H:%M:%S%z")
+
+    # 获取当前时间，并设置为UTC时区
+    current_time_utc = datetime.now(timezone.utc)
+
+    # 将当前时间转换为传入时间的时区
+    current_time = current_time_utc.astimezone(input_time.tzinfo)
+
+    # 计算时间差并转换为秒
+    time_diff_seconds = (current_time - input_time).total_seconds()
+
+    time_diff_seconds = int(time_diff_seconds)
+
+    return time_diff_seconds
+
+
 def extract_numbers(s):
     # 使用正则表达式找到所有的数字
     numbers = re.findall(r'\d+', s)
@@ -422,7 +440,7 @@ def load_advertising_urls(csv_file):
 
     # 获取今天的日期
     today = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
-    yesterday = format_ts(time.time() - 24 * 60 * 60, style=1, tz_offset=TZ_OFFSET) # noqa
+    yesterday = format_ts(time.time() - 24 * 60 * 60, style=1, tz_offset=TZ_OFFSET)  # noqa
 
     try:
         # 使用 load_file 函数加载 CSV 数据
@@ -450,15 +468,15 @@ def load_advertising_urls(csv_file):
             lst_ret = lst_urls_today
         elif lst_urls_yesterday:
             print(f'No URLs for today, loaded {len(lst_urls_yesterday)} '
-                                'URLs for yesterday') # noqa
+                                'URLs for yesterday')  # noqa
             lst_ret = lst_urls_yesterday
         elif lst_urls_all:
-            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} ' # noqa
-                                'total URLs from CSV') # noqa
+            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} '  # noqa
+                                'total URLs from CSV')  # noqa
             lst_ret = lst_urls_yesterday
         else:
-            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} ' # noqa
-                                'total URLs from CSV') # noqa
+            print(f'No URLs for today and yesterday, loaded {len(lst_urls_all)} '  # noqa
+                                'total URLs from CSV')  # noqa
             lst_ret = lst_urls_all
 
     except Exception as e:

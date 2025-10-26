@@ -1,14 +1,14 @@
-import os # noqa
-import sys # noqa
+import os  # noqa
+import sys  # noqa
 import argparse
 import random
 import time
 import copy
-import pdb # noqa
+import pdb  # noqa
 import shutil
 import math
-import re # noqa
-from datetime import datetime # noqa
+import re  # noqa
+from datetime import datetime  # noqa
 from datetime import timedelta
 
 from DrissionPage._elements.none_element import NoneElement
@@ -19,6 +19,7 @@ from fun_utils import ding_msg
 from fun_utils import load_file
 from fun_utils import save2file
 from fun_utils import format_ts
+from fun_utils import ts_diff
 
 from fun_okx import OkxUtils
 from fun_dp import DpUtils
@@ -68,7 +69,7 @@ class ClsKiteAi():
         self.inst_dp.plugin_okx = True
 
         # output
-        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,claim_kite,chat_ai,badge,update_time' # noqa
+        self.DEF_HEADER_STATUS = 'account,xp,balance,quiz_date,claim_kite,chat_ai,badge,update_time'  # noqa
         self.IDX_XP = 1
         self.IDX_BALANCE = 2
         self.IDX_QUIZ_DATE = 3
@@ -119,7 +120,7 @@ class ClsKiteAi():
             if self.browser:
                 try:
                     self.browser.quit()
-                except Exception as e: # noqa
+                except Exception as e:  # noqa
                     # logger.info(f'[Close] Error: {e}')
                     pass
 
@@ -172,7 +173,7 @@ class ClsKiteAi():
             try:
                 # s_val = int(lst_pre[idx_status])
                 s_val = lst_pre[idx_status]
-            except: # noqa
+            except:  # noqa
                 pass
 
         return s_val
@@ -193,19 +194,19 @@ class ClsKiteAi():
 
             ele_btn = tab.ele('.dropdown dropdown-end', timeout=2)
             if not isinstance(ele_btn, NoneElement):
-                self.logit(None, f'Wallet is connected before') # noqa
+                self.logit(None, f'Wallet is connected before')  # noqa
                 return True
 
-            ele_btn = tab.ele('.btn btn-outline w-40 btn-sm rounded-box mt-10', timeout=2) # noqa
+            ele_btn = tab.ele('.btn btn-outline w-40 btn-sm rounded-box mt-10', timeout=2)  # noqa
             if not isinstance(ele_btn, NoneElement):
                 s_info = ele_btn.text
-                self.logit(None, f'Connect Wallet Button Text: {s_info}') # noqa
+                self.logit(None, f'Connect Wallet Button Text: {s_info}')  # noqa
                 ele_btn.wait.enabled(timeout=5)
                 ele_btn.wait.clickable(timeout=5)
                 ele_btn.click(by_js=True)
                 tab.wait(5)
 
-                ele_btn = tab.ele('@@tag()=div@@class=sc-itBLYH deySMR@@text():OKX Wallet', timeout=2) # noqa
+                ele_btn = tab.ele('@@tag()=div@@class=sc-itBLYH deySMR@@text():OKX Wallet', timeout=2)  # noqa
                 if not isinstance(ele_btn, NoneElement):
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
@@ -230,24 +231,24 @@ class ClsKiteAi():
             try:
                 iframe = tab.get_frame('t:iframe')
 
-                ele_btn = iframe.ele('@@tag()=span@@class:recaptcha-checkbox goog-inline-block', timeout=2) # noqa
+                ele_btn = iframe.ele('@@tag()=span@@class:recaptcha-checkbox goog-inline-block', timeout=2)  # noqa
                 if not isinstance(ele_btn, NoneElement):
                     s_checked = ele_btn.attr('aria-checked')
                     if s_checked == 'false':
-                        ele_btn = iframe('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2) # noqa
+                        ele_btn = iframe('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2)  # noqa
                         ele_btn.click()
                     else:
                         return True
-            except: # noqa
+            except:  # noqa
                 pass
 
         return False
 
     def click_continue(self):
         tab = self.browser.latest_tab
-        ele_blk = tab.ele('@@tag()=div@@class:flex flex-col md:flex-row justify-center', timeout=2) # noqa
+        ele_blk = tab.ele('@@tag()=div@@class:flex flex-col md:flex-row justify-center', timeout=2)  # noqa
         if not isinstance(ele_blk, NoneElement):
-            ele_btn = ele_blk.ele('@@tag()=button@@text()=Continue', timeout=2) # noqa
+            ele_btn = ele_blk.ele('@@tag()=button@@text()=Continue', timeout=2)  # noqa
             if not isinstance(ele_btn, NoneElement):
                 if ele_btn.wait.clickable(timeout=2):
                     ele_btn.click(by_js=True)
@@ -269,13 +270,13 @@ class ClsKiteAi():
                 lst_answer_ids.append(f'radio-{n_step-1}-{s_answer}-{idx}')
 
             for i in range(len(lst_answer)):
-                ele_info = ele_blk.ele(f'@@tag()=label@@for={lst_answer_ids[i]}', timeout=2) # noqa
+                ele_info = ele_blk.ele(f'@@tag()=label@@for={lst_answer_ids[i]}', timeout=2)  # noqa
                 if not isinstance(ele_info, NoneElement):
                     s_info = ele_info.text
                     self.logit(None, f'Question info: {s_info}')
                     ele_info.click()
 
-                ele_btn = ele_blk.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+                ele_btn = ele_blk.ele('@@tag()=button@@type=submit', timeout=2)  # noqa
                 if not isinstance(ele_btn, NoneElement):
                     if ele_btn.wait.clickable(timeout=2):
                         ele_btn.click(by_js=True)
@@ -315,7 +316,7 @@ class ClsKiteAi():
 
         # <|begin_of_box|>
         # <|end_of_box|>
-        s_reply = s_reply.replace('<|begin_of_box|>', '').replace('<|end_of_box|>', '') # noqa
+        s_reply = s_reply.replace('<|begin_of_box|>', '').replace('<|end_of_box|>', '')  # noqa
         self.logit('get_answer_by_llm', f's_reply from llm: {s_reply}')
 
         return s_reply
@@ -330,7 +331,7 @@ class ClsKiteAi():
         if ele_blk is not NoneElement:
             # 获取题目和选项，调用大模型获取答案
 
-            ele_info = ele_blk.ele('@@tag()=h2', timeout=2) # noqa
+            ele_info = ele_blk.ele('@@tag()=h2', timeout=2)  # noqa
             if not isinstance(ele_info, NoneElement):
                 s_question = ele_info.text
                 self.logit(None, f'Question info: {s_question}')
@@ -338,7 +339,7 @@ class ClsKiteAi():
                 self.logit(None, 'Question info is not found')
                 return False
             lst_answer_options = []
-            ele_labels = ele_blk.eles('@@tag()=label', timeout=2) # noqa
+            ele_labels = ele_blk.eles('@@tag()=label', timeout=2)  # noqa
             for ele_label in ele_labels:
                 s_info = ele_label.text
                 self.logit(None, f'answer option info: {s_info}')
@@ -347,11 +348,11 @@ class ClsKiteAi():
             # s_answer = 'B'
             lst_options = ['A', 'B', 'C', 'D']
             for i in range(15):
-                s_answer = self.get_answer_by_llm(s_question, lst_answer_options) # noqa
+                s_answer = self.get_answer_by_llm(s_question, lst_answer_options)  # noqa
                 # 如果 s_answer 不是 A、B、C、D 中的一个，则继续获取
                 if s_answer in lst_options:
                     break
-                self.logit(None, f's_answer is not A、B、C、D, try again ... {i+1}/15') # noqa
+                self.logit(None, f's_answer is not A、B、C、D, try again ... {i+1}/15')  # noqa
                 time.sleep(1)
             if s_answer not in lst_options:
                 self.logit(None, 's_answer is not A、B、C、D [FAILED]')
@@ -359,20 +360,20 @@ class ClsKiteAi():
 
             # 获取 s_answer 的 ASCII 值
             ascii_value = ord(s_answer)
-            self.logit(None, f's_answer: {s_answer}, ASCII value: {ascii_value}') # noqa
+            self.logit(None, f's_answer: {s_answer}, ASCII value: {ascii_value}')  # noqa
             idx = ascii_value - ord('A')
 
             # A -> radio-A-0
             # B -> radio-B-1
             s_label_answer = f'radio-{s_answer}-{idx}'
 
-            ele_info = ele_blk.ele(f'@@tag()=label@@for={s_label_answer}', timeout=2) # noqa
+            ele_info = ele_blk.ele(f'@@tag()=label@@for={s_label_answer}', timeout=2)  # noqa
             if not isinstance(ele_info, NoneElement):
                 s_info = ele_info.text
                 self.logit(None, f'Question info: {s_info}')
                 ele_info.click()
 
-            ele_btn = ele_blk.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+            ele_btn = ele_blk.ele('@@tag()=button@@type=submit', timeout=2)  # noqa
             if not isinstance(ele_btn, NoneElement):
                 if ele_btn.wait.clickable(timeout=2):
                     if ele_btn.click(by_js=True):
@@ -382,7 +383,7 @@ class ClsKiteAi():
     def get_step_num(self):
         s_num = -1
         tab = self.browser.latest_tab
-        ele_btn = tab.ele('@@tag()=div@@class:flex gap-2 items-center', timeout=2) # noqa
+        ele_btn = tab.ele('@@tag()=div@@class:flex gap-2 items-center', timeout=2)  # noqa
         if not isinstance(ele_btn, NoneElement):
             s_text = ele_btn.text
             self.logit('get_step_num', f'Step Text: {s_text}')
@@ -390,7 +391,7 @@ class ClsKiteAi():
             try:
                 s_num = re.search(r'Step(\d+)OF6', s_text).group(1)
                 s_num = int(s_num)
-            except: # noqa
+            except:  # noqa
                 pass
         return s_num
 
@@ -409,7 +410,7 @@ class ClsKiteAi():
                 # 如果 Kite 图标加载完成，则返回 True
                 tab.wait.doc_loaded()
                 tab.wait(3)
-                ele_info = tab.ele('@@tag()=img@@alt=KAA@@class:20dvh', timeout=2) # noqa
+                ele_info = tab.ele('@@tag()=img@@alt=KAA@@class:20dvh', timeout=2)  # noqa
                 if not isinstance(ele_info, NoneElement):
                     self.logit('finish_6_steps', 'Finished loading')
                     return True
@@ -437,7 +438,7 @@ class ClsKiteAi():
 
     def claim_badge(self):
         tab = self.browser.latest_tab
-        ele_btn = tab.ele('@@tag()=span@@class:text@@text():BADGES', timeout=2) # noqa
+        ele_btn = tab.ele('@@tag()=span@@class:text@@text():BADGES', timeout=2)  # noqa
         if not isinstance(ele_btn, NoneElement):
             if ele_btn.wait.clickable(timeout=5):
                 ele_btn.click()
@@ -445,7 +446,7 @@ class ClsKiteAi():
 
         is_claimed = False
         s_val_badge = ''
-        ele_btns = tab.eles('@@tag()=div@@class=flex justify-center mb-4', timeout=2) # noqa
+        ele_btns = tab.eles('@@tag()=div@@class=flex justify-center mb-4', timeout=2)  # noqa
         if len(ele_btns) > 0:
             for ele_btn in ele_btns:
                 if ele_btn.wait.clickable(timeout=5):
@@ -462,7 +463,7 @@ class ClsKiteAi():
                         tab.wait(2)
                         ele_btn.click()
                         tab.wait(2)
-                        ele_claim_btn = tab.ele('@@tag()=button@@class:btn bg-gradient-to-r@@text()=CLAIM BADGE', timeout=2) # noqa
+                        ele_claim_btn = tab.ele('@@tag()=button@@class:btn bg-gradient-to-r@@text()=CLAIM BADGE', timeout=2)  # noqa
                         if not isinstance(ele_claim_btn, NoneElement):
                             if ele_claim_btn.wait.clickable(timeout=5):
                                 ele_claim_btn.click()
@@ -470,19 +471,19 @@ class ClsKiteAi():
                                 i = 0
                                 while i < n_wait:
                                     i += 1
-                                    self.logit('badges', f'Waiting for CLAIM BADGE ... {i}/{n_wait}') # noqa
+                                    self.logit('badges', f'Waiting for CLAIM BADGE ... {i}/{n_wait}')  # noqa
                                     time.sleep(1)
-                                    is_tag, s_text = self.inst_dp.get_tag_info_v2('p', 'YOU CLAIMED THIS ON') # noqa
+                                    is_tag, s_text = self.inst_dp.get_tag_info_v2('p', 'YOU CLAIMED THIS ON')  # noqa
                                     if is_tag:
                                         is_claimed = True
                                         break
                                 tab.wait(2)
 
-                is_tag, s_text = self.inst_dp.get_tag_info_v2('p', 'YOU CLAIMED THIS ON') # noqa
+                is_tag, s_text = self.inst_dp.get_tag_info_v2('p', 'YOU CLAIMED THIS ON')  # noqa
                 if is_tag:
                     s_val_badge += f'{s_h3}[{s_text}];'
 
-                ele_back_btn = tab.ele('@@tag()=button@@class=btn btn-outline@@text()=BACK', timeout=2) # noqa
+                ele_back_btn = tab.ele('@@tag()=button@@class=btn btn-outline@@text()=BACK', timeout=2)  # noqa
                 if not isinstance(ele_back_btn, NoneElement):
                     if ele_back_btn.wait.clickable(timeout=5):
                         ele_back_btn.click()
@@ -503,35 +504,36 @@ class ClsKiteAi():
                 2: error
         """
         tab = self.browser.latest_tab
-        ele_btns = tab.eles('@@tag()=button@@class:text-left p-1 bg-muted', timeout=2) # noqa
+        ele_btns = tab.eles('@@tag()=button@@class:text-left p-1 bg-muted', timeout=2)  # noqa
         if len(ele_btns) > 0:
             for ele_btn in ele_btns:
                 if ele_btn.wait.clickable(timeout=5):
                     ele_btn.click()
                     tab.wait(10)
-                    ele_infos = tab.eles('@@tag()=p@@class=mb-2 last:mb-0', timeout=2) # noqa
+                    ele_infos = tab.eles('@@tag()=p@@class=mb-2 last:mb-0', timeout=2)  # noqa
                     if len(ele_infos) > 0:
                         ele_info = ele_infos[-1]
                         s_info = ele_info.text
                         self.logit('click_aifaq', f'Answer: {s_info}')
-                        # You've reached daily limitation. Please try 24 hours again.
+                        # You've reached daily limitation. Please try 24 hours again. # noqa
                         if 'daily limitation' in s_info:
-                            self.update_status(self.IDX_CHAT_AI, s_info) # noqa
+                            self.update_status(self.IDX_CHAT_AI, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET))  # noqa
+                            # self.update_status(self.IDX_CHAT_AI, s_info)  # noqa
                             return (1, s_info)
-                        self.update_status(self.IDX_CHAT_AI, 'Yes') # noqa
+                        # self.update_status(self.IDX_CHAT_AI, 'Yes')  # noqa
 
         return (0, '')
 
     def input_to_ai(self):
         tab = self.browser.latest_tab
-        ele_input = tab.ele('@@tag()=input@@placeholder:Type', timeout=2) # noqa
+        ele_input = tab.ele('@@tag()=input@@placeholder:Type', timeout=2)  # noqa
         if not isinstance(ele_input, NoneElement):
             if ele_input.wait.clickable(timeout=5):
                 ele_input.click()
                 tab.wait(2)
                 tab.actions.move_to(ele_input).click().type('Hello')
                 tab.wait(2)
-                ele_submit = tab.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+                ele_submit = tab.ele('@@tag()=button@@type=submit', timeout=2)  # noqa
                 if not isinstance(ele_submit, NoneElement):
                     if ele_submit.wait.clickable(timeout=5):
                         ele_submit.click()
@@ -539,7 +541,7 @@ class ClsKiteAi():
 
     def click_menu_kite_ai(self):
         tab = self.browser.latest_tab
-        ele_btn = tab.ele('@@tag()=img@@src:subnet_WXSBE1yFo8oCb9r9mcrbLqfS', timeout=2) # noqa
+        ele_btn = tab.ele('@@tag()=img@@src:subnet_WXSBE1yFo8oCb9r9mcrbLqfS', timeout=2)  # noqa
         if not isinstance(ele_btn, NoneElement):
             if ele_btn.wait.clickable(timeout=5):
                 ele_btn.click()
@@ -556,13 +558,13 @@ class ClsKiteAi():
             if not self.click_menu_kite_ai():
                 continue
 
-            ele_menu_btn = tab.ele('.relative cursor-pointer text-center -mt-1', timeout=2) # noqa
+            ele_menu_btn = tab.ele('.relative cursor-pointer text-center -mt-1', timeout=2)  # noqa
             if not isinstance(ele_menu_btn, NoneElement):
                 if ele_menu_btn.wait.clickable(timeout=5):
                     ele_menu_btn.click()
                     tab.wait(2)
 
-            ele_btns = tab.eles('@@tag()=div@@id:agent_', timeout=2) # noqa
+            ele_btns = tab.eles('@@tag()=div@@id:agent_', timeout=2)  # noqa
             if len(ele_btns) > 0:
                 ele_btn = random.choice(ele_btns)
                 s_agent = ele_btn.text.replace('\n', ': ')
@@ -572,7 +574,8 @@ class ClsKiteAi():
                     tab.wait(2)
                     (status_code, s_info) = self.click_aifaq()
                     if status_code == 1:
-                        self.logit('chat_with_ai', f'Daily limitation: {s_info}')
+                        self.logit('chat_with_ai',
+                                   f'Daily limitation: {s_info}')
                         return (status_code, s_info)
 
         return (0, '')
@@ -598,10 +601,10 @@ class ClsKiteAi():
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
                     else:
-                        self.logit('kite_ai_process', 'Button CLAIM TESTNET TOKENS is not clickable') # noqa
+                        self.logit('kite_ai_process', 'Button CLAIM TESTNET TOKENS is not clickable')  # noqa
                         return False
 
-                ele_btn = tab.ele('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2) # noqa
+                ele_btn = tab.ele('.rc-anchor-center-item rc-anchor-checkbox-holder', timeout=2)  # noqa
                 if not isinstance(ele_btn, NoneElement):
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
@@ -610,20 +613,20 @@ class ClsKiteAi():
                 i = 0
                 while i < max_wait_sec:
                     i += 1
-                    self.logit(None, f'Wait to click verification ... {i}/{max_wait_sec}') # noqa
+                    self.logit(None, f'Wait to click verification ... {i}/{max_wait_sec}')  # noqa
 
                     if self.click_verification():
-                        ele_btn = tab.ele('@@tag()=button@@class:btn btn-block bg-gradient-to-r', timeout=2) # noqa
+                        ele_btn = tab.ele('@@tag()=button@@class:btn btn-block bg-gradient-to-r', timeout=2)  # noqa
                         if ele_btn.wait.clickable(timeout=5):
                             if ele_btn.click():
                                 max_wait_sec = 20
                                 i = 0
                                 while i < max_wait_sec:
                                     i += 1
-                                    self.logit('kite_ai_process', f'Waiting for CLAIM Status ... {i}/{max_wait_sec}') # noqa
+                                    self.logit('kite_ai_process', f'Waiting for CLAIM Status ... {i}/{max_wait_sec}')  # noqa
                                     time.sleep(1)
-                                    if self.get_tag_info('div', 'successfully'): # noqa
-                                        self.update_status(self.IDX_CLAIM_KITE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
+                                    if self.get_tag_info('div', 'successfully'):  # noqa
+                                        self.update_status(self.IDX_CLAIM_KITE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET))  # noqa
                                         return True
                                     elif self.get_tag_info('div', 'Already'):
                                         return True
@@ -633,7 +636,7 @@ class ClsKiteAi():
                     else:
                         tab.wait(1)
         else:
-            self.logit('kite_ai_process', 'dropdown menu is not found') # noqa
+            self.logit('kite_ai_process', 'dropdown menu is not found')  # noqa
             return False
 
         return True
@@ -656,7 +659,7 @@ class ClsKiteAi():
 
     def get_notification(self):
         tab = self.browser.latest_tab
-        ele_info = tab.ele('@@tag()=section@@aria-label:Notifications', timeout=2) # noqa
+        ele_info = tab.ele('@@tag()=section@@aria-label:Notifications', timeout=2)  # noqa
         if not isinstance(ele_info, NoneElement):
             s_info = ele_info.text
             self.logit('get_notification', f'Notification: {s_info}')
@@ -666,7 +669,7 @@ class ClsKiteAi():
     def get_xp_balance(self):
         tab = self.browser.latest_tab
 
-        ele_info = tab.ele('@@tag()=div@@class=join border rounded-box bg-accent', timeout=2) # noqa
+        ele_info = tab.ele('@@tag()=div@@class=join border rounded-box bg-accent', timeout=2)  # noqa
         if not isinstance(ele_info, NoneElement):
             s_info = ele_info.text
             s_xp, s_balance = s_info.split('XP\n')
@@ -684,7 +687,7 @@ class ClsKiteAi():
 
         b_to_submit = False
         tab = self.browser.latest_tab
-        ele_btn = tab.ele('@@tag()=span@@class:text@@text():QUIZ', timeout=2) # noqa
+        ele_btn = tab.ele('@@tag()=span@@class:text@@text():QUIZ', timeout=2)  # noqa
         if not isinstance(ele_btn, NoneElement):
             if ele_btn.wait.clickable(timeout=5):
                 ele_btn.click()
@@ -693,33 +696,64 @@ class ClsKiteAi():
                 i = 0
                 while i < max_wait_sec:
                     i += 1
-                    self.logit('daily_quiz', f'Waiting for button submit ... {i}/{max_wait_sec}') # noqa
-                    ele_btn = tab.ele('@@tag()=button@@type=submit', timeout=2) # noqa
+                    self.logit('daily_quiz', f'Waiting for button submit ... {i}/{max_wait_sec}')  # noqa
+                    ele_btn = tab.ele('@@tag()=button@@type=submit', timeout=2)  # noqa
                     if not isinstance(ele_btn, NoneElement):
                         if ele_btn.wait.clickable(timeout=2):
                             b_to_submit = True
                             break
                     time.sleep(1)
 
-                ele_selected = tab.ele('@@tag()=input@@checked@@name=radio', timeout=2) # noqa
+                ele_selected = tab.ele('@@tag()=input@@checked@@name=radio', timeout=2)  # noqa
                 if not isinstance(ele_selected, NoneElement):
                     b_to_submit = False
 
                 if b_to_submit is False:
-                    self.logit('daily_quiz', 'QUIZ is done before') # noqa
+                    self.logit('daily_quiz', 'QUIZ is done before')  # noqa
                     return True
 
                 if self.do_daily_quiz():
                     n_wait = 30
                     for i in range(1, n_wait+1):
-                        self.logit('daily_quiz', f'Waiting for notification ... {i}/{n_wait}') # noqa
-                        is_tag = self.inst_dp.get_tag_info('div', 'Congratulations') # noqa
-                        is_tag = is_tag or self.inst_dp.get_tag_info('div', 'answer') # noqa
+                        self.logit('daily_quiz', f'Waiting for notification ... {i}/{n_wait}')  # noqa
+                        is_tag = self.inst_dp.get_tag_info('div', 'Congratulations')  # noqa
+                        is_tag = is_tag or self.inst_dp.get_tag_info('div', 'answer')  # noqa
                         if is_tag:
-                            self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET)) # noqa
+                            self.update_status(self.IDX_QUIZ_DATE, format_ts(time.time(), style=2, tz_offset=TZ_OFFSET))  # noqa
                             time.sleep(2)
                             return True
         return False
+
+    def claim_kite_tokens(self):
+        max_try = 5
+        for i in range(1, max_try+1):
+            self.logit('kite_ai_run', f'trying ... {i}/{max_try}')
+            if self.kite_ai_process():
+                break
+            else:
+                time.sleep(2)
+
+    def is_time_ready(self, idx_status):
+        """
+        剩余的秒数
+        Return:
+            (b_ready, n_remain_sec)
+            b_ready:
+                True: 时间已准备好
+                False: 时间未准备好
+            n_remain_sec:
+                时间差，单位：秒
+        """
+        lst_status = self.dic_status[self.args.s_profile]
+        if len(lst_status) != self.FIELD_NUM:
+            return (True, 0)
+        s_timestamp = lst_status[idx_status]
+        if s_timestamp:
+            n_seconds = ts_diff(s_timestamp)
+            n_remain_sec = 86460 - n_seconds
+            if n_remain_sec > 0:
+                return (False, n_remain_sec)
+        return (True, 0)
 
     def kite_ai_run(self):
         self.browser = self.inst_dp.get_browser(self.args.s_profile)
@@ -740,30 +774,37 @@ class ClsKiteAi():
         tab.wait(5)
         self.inst_dp.init_window_size()
 
-        max_try = 5
-        for i in range(1, max_try+1):
-            self.logit('kite_ai_run', f'trying ... {i}/{max_try}')
-            if self.kite_ai_process():
-                break
-            else:
-                time.sleep(2)
+        (b_ready, n_remain_sec) = self.is_time_ready(self.IDX_CLAIM_KITE)
+        if b_ready:
+            self.claim_kite_tokens()
+        else:
+            self.logit('kite_ai_run', f'[CLAIM_KITE] Time not ready, {n_remain_sec} seconds remaining')  # noqa
 
-        self.daily_quiz()
-        self.chat_with_ai()
+        (b_ready, n_remain_sec) = self.is_time_ready(self.IDX_QUIZ_DATE)
+        if b_ready:
+            self.daily_quiz()
+        else:
+            self.logit('kite_ai_run', f'[QUIZ] Time not ready, {n_remain_sec} seconds remaining')  # noqa
+
+        (b_ready, n_remain_sec) = self.is_time_ready(self.IDX_CHAT_AI)
+        if b_ready:
+            self.chat_with_ai()
+        else:
+            self.logit('kite_ai_run', f'[CHAT_AI] Time not ready, {n_remain_sec} seconds remaining')  # noqa
 
         # generate a random number
         random_num = random.randint(1, 9)
         if random_num % 2 == 0:
-            self.logit('kite_ai_run', f'random_num is {random_num}, Claim badge') # noqa
+            self.logit('kite_ai_run', f'random_num is {random_num}, Claim badge')  # noqa
             self.claim_badge()
         else:
-            self.logit('kite_ai_run', f'random_num is {random_num}, Not claim badge') # noqa
+            self.logit('kite_ai_run', f'random_num is {random_num}, Not claim badge')  # noqa
 
         self.update_status(self.IDX_XP, self.get_xp_balance()[0])
         self.update_status(self.IDX_BALANCE, self.get_xp_balance()[1])
 
         if self.args.manual_exit:
-            s_msg = 'Manual Exit. Press any key to exit! ⚠️' # noqa
+            s_msg = 'Manual Exit. Press any key to exit! ⚠️'  # noqa
             input(s_msg)
 
         self.logit('kite_ai_run', 'Finished!')
@@ -815,13 +856,13 @@ def show_msg(args):
 
 def main(args):
     if args.sleep_sec_at_start > 0:
-        logger.info(f'Sleep {args.sleep_sec_at_start} seconds at start !!!') # noqa
+        logger.info(f'Sleep {args.sleep_sec_at_start} seconds at start !!!')  # noqa
         time.sleep(args.sleep_sec_at_start)
 
     if DEL_PROFILE_DIR and os.path.exists(DEF_PATH_USER_DATA):
         logger.info(f'Delete {DEF_PATH_USER_DATA} ...')
         shutil.rmtree(DEF_PATH_USER_DATA)
-        logger.info(f'Directory {DEF_PATH_USER_DATA} is deleted') # noqa
+        logger.info(f'Directory {DEF_PATH_USER_DATA} is deleted')  # noqa
 
     inst_kite_ai = ClsKiteAi()
     inst_kite_ai.set_args(args)
@@ -831,7 +872,7 @@ def main(args):
     inst_kite_ai.inst_okx.purse_load(args.decrypt_pwd)
 
     # 检查 profile 参数冲突
-    if args.profile and (args.profile_begin is not None or args.profile_end is not None): # noqa
+    if args.profile and (args.profile_begin is not None or args.profile_end is not None):  # noqa
         logger.info('参数 --profile 与 --profile_begin/--profile_end 不能同时使用！')
         sys.exit(1)
 
@@ -843,7 +884,7 @@ def main(args):
         start_num = int(re.search(r'\d+', args.profile_begin).group())
         end_num = int(re.search(r'\d+', args.profile_end).group())
         num_width = len(re.search(r'\d+', args.profile_begin).group())
-        items = [f"{prefix}{str(i).zfill(num_width)}" for i in range(start_num, end_num + 1)] # noqa
+        items = [f"{prefix}{str(i).zfill(num_width)}" for i in range(start_num, end_num + 1)]  # noqa
         logger.info(f'Profile list: {items}')
     else:
         # 从配置文件里获取钱包名称列表
@@ -858,21 +899,36 @@ def main(args):
     lst_success = []
 
     def is_complete(lst_status):
+        """
+        如果3个时间都是24小时内，则认为任务完成
+        lst_idx:
+            inst_kite_ai.IDX_QUIZ_DATE
+            inst_kite_ai.IDX_CLAIM_KITE
+            inst_kite_ai.IDX_CHAT_AI
+        """
         if args.force:
             return False
 
+        if len(lst_status) != inst_kite_ai.FIELD_NUM:
+            return False
+
         b_ret = True
-        date_now = format_ts(time.time(), style=1, tz_offset=TZ_OFFSET)
 
         if lst_status:
-            lst_idx = [inst_kite_ai.IDX_QUIZ_DATE, inst_kite_ai.IDX_CLAIM_KITE]
+            lst_idx = [inst_kite_ai.IDX_QUIZ_DATE,
+                       inst_kite_ai.IDX_CLAIM_KITE, inst_kite_ai.IDX_CHAT_AI]
             # lst_idx = [inst_kite_ai.IDX_CLAIM_KITE]
             for idx_status in lst_idx:
                 try:
-                    s_date = lst_status[idx_status][:10]
-                except: # noqa
-                    s_date = ''
-                if date_now != s_date:
+                    s_timestamp = lst_status[idx_status]
+                    if s_timestamp:
+                        # 格式: 2025-10-07T18:28:17+0800
+                        n_seconds = ts_diff(s_timestamp)
+                        if n_seconds > 86460:
+                            b_ret = b_ret and False
+                    else:
+                        b_ret = b_ret and False
+                except:  # noqa
                     b_ret = b_ret and False
         else:
             b_ret = False
@@ -896,17 +952,17 @@ def main(args):
     logger.info('#'*40)
 
     percent = math.floor((n / total) * 100)
-    logger.info(f'Progress: {percent}% [{n}/{total}]') # noqa
+    logger.info(f'Progress: {percent}% [{n}/{total}]')  # noqa
 
     while profiles:
         n += 1
         logger.info('#'*40)
         s_profile = random.choice(profiles)
         percent = math.floor((n / total) * 100)
-        logger.info(f'Progress: {percent}% [{n}/{total}] [{s_profile}]') # noqa
+        logger.info(f'Progress: {percent}% [{n}/{total}] [{s_profile}]')  # noqa
 
         if percent > args.max_percent:
-            logger.info(f'Progress is more than threshold {percent}% > {args.max_percent}% [{n}/{total}] [{s_profile}]') # noqa
+            logger.info(f'Progress is more than threshold {percent}% > {args.max_percent}% [{n}/{total}] [{s_profile}]')  # noqa
             break
 
         profiles.remove(s_profile)
@@ -922,7 +978,7 @@ def main(args):
         for j in range(1, max_try_except+1):
             try:
                 if j > 1:
-                    logger.info(f'⚠️ 正在重试，当前是第{j}次执行，最多尝试{max_try_except}次 [{s_profile}]') # noqa
+                    logger.info(f'⚠️ 正在重试，当前是第{j}次执行，最多尝试{max_try_except}次 [{s_profile}]')  # noqa
 
                 inst_kite_ai.set_args(args)
                 inst_kite_ai.inst_dp.set_args(args)
@@ -934,7 +990,7 @@ def main(args):
                     lst_status = None
 
                 if is_complete(lst_status):
-                    logger.info(f'[{s_profile}] Last update at {lst_status[inst_kite_ai.IDX_UPDATE]}') # noqa
+                    logger.info(f'[{s_profile}] Last update at {lst_status[inst_kite_ai.IDX_UPDATE]}')  # noqa
                     break
                 else:
                     b_ret = inst_kite_ai.kite_ai_run()
@@ -965,7 +1021,7 @@ def main(args):
 
             # 输出下次执行时间，格式为 YYYY-MM-DD HH:MM:SS
             next_exec_time = datetime.now() + timedelta(seconds=sleep_time)
-            logger.info(f'next_exec_time: {next_exec_time.strftime("%Y-%m-%d %H:%M:%S")}') # noqa
+            logger.info(f'next_exec_time: {next_exec_time.strftime("%Y-%m-%d %H:%M:%S")}')  # noqa
             time.sleep(sleep_time)
 
     send_msg(inst_kite_ai, lst_success)
@@ -1090,7 +1146,7 @@ if __name__ == '__main__':
             if args.get_task_status:
                 break
 
-            logger.info('#####***** Loop sleep {} seconds ...'.format(args.loop_interval)) # noqa
+            logger.info('#####***** Loop sleep {} seconds ...'.format(args.loop_interval))  # noqa
             time.sleep(args.loop_interval)
 
 """
