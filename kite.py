@@ -552,7 +552,7 @@ class ClsKiteAi():
     def chat_with_ai(self):
         tab = self.browser.latest_tab
 
-        n_max_try = 20
+        n_max_try = 10
         for i in range(n_max_try):
             self.logit('chat_with_ai', f'Trying ... {i+1}/{n_max_try}')
             if not self.click_menu_kite_ai():
@@ -609,7 +609,7 @@ class ClsKiteAi():
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
 
-                max_wait_sec = 20
+                max_wait_sec = 5
                 i = 0
                 while i < max_wait_sec:
                     i += 1
@@ -619,7 +619,7 @@ class ClsKiteAi():
                         ele_btn = tab.ele('@@tag()=button@@class:btn btn-block bg-gradient-to-r', timeout=2)  # noqa
                         if ele_btn.wait.clickable(timeout=5):
                             if ele_btn.click():
-                                max_wait_sec = 20
+                                max_wait_sec = 18
                                 i = 0
                                 while i < max_wait_sec:
                                     i += 1
@@ -725,7 +725,7 @@ class ClsKiteAi():
         return False
 
     def claim_kite_tokens(self):
-        max_try = 5
+        max_try = 3
         for i in range(1, max_try+1):
             self.logit('kite_ai_run', f'trying ... {i}/{max_try}')
             if self.kite_ai_process():
