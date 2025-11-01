@@ -552,7 +552,8 @@ class ClsKiteAi():
     def chat_with_ai(self):
         tab = self.browser.latest_tab
 
-        n_max_try = 10
+        # 15 到 18 之间随机一个数
+        n_max_try = random.randint(15, 18)
         for i in range(n_max_try):
             self.logit('chat_with_ai', f'Trying ... {i+1}/{n_max_try}')
             if not self.click_menu_kite_ai():
@@ -609,7 +610,7 @@ class ClsKiteAi():
                     if ele_btn.wait.clickable(timeout=5):
                         ele_btn.click()
 
-                max_wait_sec = 5
+                max_wait_sec = 2
                 i = 0
                 while i < max_wait_sec:
                     i += 1
@@ -638,6 +639,12 @@ class ClsKiteAi():
         else:
             self.logit('kite_ai_process', 'dropdown menu is not found')  # noqa
             return False
+
+        ele_btn = tab.ele('@@tag()=button@@class:btn@@id=dockContainerCancel', timeout=2)  # noqa
+        if not isinstance(ele_btn, NoneElement):
+            if ele_btn.wait.clickable(timeout=5):
+                ele_btn.click()
+                tab.wait(1)
 
         return True
 
@@ -672,7 +679,7 @@ class ClsKiteAi():
         ele_info = tab.ele('@@tag()=div@@class=join border rounded-box bg-accent', timeout=2)  # noqa
         if not isinstance(ele_info, NoneElement):
             s_info = ele_info.text
-            s_xp, s_balance = s_info.split('XP\n')
+            s_xp, s_balance = s_info.split('XP')
             s_xp = s_xp.strip()
             s_balance = s_balance.strip()
             self.logit('get_xp', f'XP: {s_info}')
@@ -919,6 +926,8 @@ def main(args):
         b_ret = True
 
         if lst_status:
+            # lst_idx = [inst_kite_ai.IDX_QUIZ_DATE,
+            #           inst_kite_ai.IDX_CHAT_AI]
             lst_idx = [inst_kite_ai.IDX_QUIZ_DATE,
                        inst_kite_ai.IDX_CLAIM_KITE, inst_kite_ai.IDX_CHAT_AI]
             # lst_idx = [inst_kite_ai.IDX_CLAIM_KITE]
